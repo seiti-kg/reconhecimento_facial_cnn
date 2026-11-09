@@ -1,0 +1,20 @@
+# Instalacao (Python 3.11):
+#   python -m venv venv
+#   .\venv\Scripts\activate
+#   pip install -r requirements.txt
+# Versoes exatas do ambiente em que a atividade foi feita e testada.
+
+# Deteccao (YuNet), captura, video e demo ao vivo (src/)
+opencv-python==4.14.0.94
+
+# Notebook: rede, dados e graficos
+tensorflow==2.21.0
+scikit-learn==1.8.0      # base LFW (classe "Desconhecido") e divisao treino/teste
+numpy==2.4.4
+pandas==3.0.2
+matplotlib==3.10.9
+seaborn==0.13.2          # matriz de confusao
+pillow==12.2.0
+
+# UI local (src/app_demo.py)
+flask==3.1.2

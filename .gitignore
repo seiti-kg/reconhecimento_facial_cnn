@@ -1,0 +1,16 @@
+# Dados e modelos nunca entram no Git
+dados/
+modelos/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+.ruff_cache/
+.pytest_cache/
+.DS_Store
+Thumbs.db
+*.log

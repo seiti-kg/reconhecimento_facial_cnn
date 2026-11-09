@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR" data-mode="live">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f1efe9">
+  <title>Reconhecimento facial</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='demo.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="6.5"></circle>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+          <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </span>
+      <div class="brand-copy">
+        <h1>Reconhecimento facial</h1>
+        <p>CNN própria + emoção · demonstração local</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="model-chips" aria-label="Modelos em uso">
+        <span class="chip">CNN · {{ config.classes_identidade|length }} classes</span>
+        <span class="chip">EMOÇÃO · {{ config.modelo_emocao }}</span>
+      </div>
+      <div class="mode-switch" role="group" aria-label="Modo de entrada">
+        <button id="mode-live" type="button" aria-pressed="true">Ao vivo</button>
+        <button id="mode-photo" type="button" aria-pressed="false">Foto</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="stage-column" aria-label="Entrada de vídeo ou foto">
+      <div class="stage-toolbar">
+        <div id="status" class="status" role="status" aria-live="polite">
+          <span id="status-dot" class="dot is-idle" aria-hidden="true"></span>
+          <span id="status-text">Câmera desligada</span>
+        </div>
+        <div class="stage-actions">
+          <button id="camera-toggle" class="btn btn-primary" type="button">Iniciar câmera</button>
+          <button id="photo-button" class="btn" type="button" hidden>Escolher foto</button>
+          <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp,image/bmp"
+                 aria-label="Selecionar foto" hidden>
+        </div>
+      </div>
+
+      <div id="error-banner" class="banner" role="alert" hidden>
+        <span id="error-text"></span>
+        <button id="error-close" class="icon-btn" type="button" aria-label="Fechar aviso">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div id="stage" class="stage">
+        <i class="corner tl" aria-hidden="true"></i>
+        <i class="corner tr" aria-hidden="true"></i>
+        <i class="corner bl" aria-hidden="true"></i>
+        <i class="corner br" aria-hidden="true"></i>
+
+        <canvas id="scene" width="1280" height="720" role="img"
+                aria-label="Nenhum quadro analisado"></canvas>
+
+        <div id="stage-empty" class="stage-empty">
+          <span class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l1.1-1.8a1 1 0 0 1 .9-.5h4.6a1 1 0 0 1 .9.5L16.3 6h1.2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"></path>
+              <circle cx="12" cy="12.5" r="3.2"></circle>
+            </svg>
+          </span>
+          <strong id="stage-empty-title">Ligue a câmera ou envie uma foto</strong>
+          <p id="stage-empty-body">O reconhecimento roda localmente. Escolha uma entrada para começar.</p>
+        </div>
+
+        <div id="dropzone" class="dropzone" hidden tabindex="0" role="button"
+             aria-label="Enviar foto: arraste ou clique para escolher">
+          <span class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M12 16V5"></path>
+              <path d="m8 9 4-4 4 4"></path>
+              <path d="M5 19h14"></path>
+            </svg>
+          </span>
+          <strong>Arraste uma foto ou clique para escolher</strong>
+          <span>JPG, PNG ou WEBP · até 32 MB</span>
+        </div>
+
+        <div id="stage-loading" class="stage-loading" hidden aria-live="polite">
+          <span>Analisando…</span>
+          <i aria-hidden="true"></i>
+        </div>
+
+        <div id="stage-badge" class="stage-badge" hidden>
+          <span id="badge-dot" class="dot" aria-hidden="true"></span>
+          <span id="badge-text">AO VIVO</span>
+        </div>
+
+        <div id="stage-footer" class="stage-footer" aria-hidden="true">
+          <div><span>RES</span><strong id="tech-res">—</strong></div>
+          <div><span>ROSTOS</span><strong id="tech-faces">—</strong></div>
+          <div><span>LAT</span><strong id="tech-latency">—</strong></div>
+          <div><span>AN/S</span><strong id="tech-rate">—</strong></div>
+        </div>
+      </div>
+
+      <p class="stage-hint">Processamento local. O quadro é enviado apenas para este servidor e não é gravado.</p>
+    </section>
+
+    <aside class="readout" aria-label="Resultados da análise">
+      <div class="readout-header">
+        <h2>Leitura</h2>
+        <span id="face-count">0 rostos</span>
+      </div>
+      <div id="results" class="results"></div>
+      <div id="readout-footer" class="readout-footer">
+        Limiar 0,80 · suavização 8 quadros no ao vivo · processamento local
+      </div>
+    </aside>
+  </main>
+
+  <video id="video" playsinline muted hidden></video>
+
+  <script>
+    window.DEMO_CONFIG = {{ config | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='demo.js') }}" defer></script>
+</body>
+</html>
